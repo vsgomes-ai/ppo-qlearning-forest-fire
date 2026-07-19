@@ -1,4 +1,4 @@
-# Controle de aceiros em autômato celular de incêndio florestal via aprendizado por reforço
+# Representação do Estado em Aprendizado por Reforçopara Controle de Incêndios em Autômatos Celulares
 
 Repositório da disciplina de Autômatos Celulares (DEINFO / UFRPE). Implementa um autômato celular de incêndio florestal com vento e spotting, acoplado a um MDP Gymnasium em que o agente abre aceiros. Quatro políticas são avaliadas no **mesmo ambiente e nas mesmas seeds**: aleatória, heurística, Q-learning tabular e PPO.
 
