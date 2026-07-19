@@ -1,26 +1,34 @@
 # Representação do Estado em Aprendizado por Reforço para Controle de Incêndios em Autômatos Celulares
 
-Repositório da disciplina de Autômatos Celulares (DEINFO / UFRPE). Implementa um autômato celular de incêndio florestal com vento e spotting, acoplado a um MDP Gymnasium em que o agente abre aceiros. Quatro políticas são avaliadas no **mesmo ambiente e nas mesmas seeds**: aleatória, heurística, Q-learning tabular e PPO.
+Repositório da disciplina de Autômatos Celulares (DEINFO / UFRPE). O projeto acopla um **autômato celular de incêndio florestal** (vento + spotting) a um **MDP Gymnasium** em que um agente abre aceiros para preservar biomassa. Quatro políticas são comparadas no **mesmo ambiente e nas mesmas seeds**: aleatória, heurística, Q-learning tabular e PPO.
 
-Artigo: [`paper/article.pdf`](paper/article.pdf) · código fonte LaTeX: [`paper/article.tex`](paper/article.tex)
+Artigo completo: [`paper/article.pdf`](paper/article.pdf) ([`article.tex`](paper/article.tex)).
+
+## Visão geral
+
+O núcleo físico é a grade celular. A cada tick, o fogo se propaga por vizinhança de Moore, é enviesado por vento constante a leste e pode saltar (spotting). O agente não apaga células em chamas: ele remove combustível (`TREE` → `EMPTY`) em uma região relativa ao centroide do fogo, com orçamento limitado por passo. Em seguida o autômato avança um tick e a recompensa mede biomassa preservada versus custo do aceiro.
+
+```mermaid
+flowchart LR
+  Pol[Politica] --> Env[ForestFireEnv]
+  Env -->|aceiro| CA[ForestFireCA]
+  CA -->|grade atualizada| Env
+  Env -->|obs e reward| Pol
+```
+
+A justiça experimental é central: `EnvConfig` / `make_default_env()` fixam os parâmetros canônicos. Treino, avaliação e renderização usam a mesma fábrica. Na avaliação, `PolicyEvaluator` percorre seeds idênticas para todas as políticas, de modo que a diferença observada se deve ao algoritmo e à observação, não a realizações distintas do fogo.
 
 ## Visualização (seed 340)
 
+<<<<<<< HEAD
 Comparação 3D das quatro políticas:
+=======
+Comparação 3D das quatro políticas sobre a mesma realização estocástica (figuras análogas às do artigo):
+>>>>>>> bc303cd (docs: streamline README with fewer diagrams and clearer prose)
 
 ![Comparação 3D: Aleatório, Heurística, Q-learning e PPO](results/forest_fire_3d_4algos.gif)
 
-Stills do artigo (início e finais por política):
-
-| t = 0 | Sem controle | Heurística |
-|:-----:|:------------:|:----------:|
-| ![t0](paper/figures/fig3d_t0.png) | ![wild](paper/figures/fig3d_wild_tf.png) | ![heu](paper/figures/fig3d_heu_tf.png) |
-
-| Q-learning | PPO |
-|:----------:|:---:|
-| ![ql](paper/figures/fig3d_ql_tf.png) | ![ppo](paper/figures/fig3d_ppo_tf.png) |
-
-Resumo quantitativo (100 episódios, seeds 1000 a 1099):
+Nesta seed ilustrativa, o PPO preserva cerca de 91% das árvores, contra ~36% do Q-learning, ~17% do aleatório e ~12% da heurística. O gráfico abaixo resume o desempenho médio em 100 episódios (seeds 1000 a 1099):
 
 ![Comparação de políticas: biomassa preservada e retorno](paper/figures/fig_policy_comparison.png)
 
@@ -31,203 +39,101 @@ Resumo quantitativo (100 episódios, seeds 1000 a 1099):
 | Heurística | 0,559 ± 0,228               | −5,94           |
 | PPO        | 0,610 ± 0,229               | +4,79           |
 
-## Arquitetura do sistema
+Stills finais do artigo (sem controle, heurística, Q-learning, PPO), a partir do mesmo estado inicial:
 
-```mermaid
-flowchart TB
-  subgraph ca [Automato celular]
-    Grid[Grade 30x30: Empty Tree Burning Burned]
-    Rules[Propagacao Moore + vento + spotting]
-    Grid --> Rules
-  end
+| Sem controle | Heurística | Q-learning | PPO |
+|:------------:|:----------:|:----------:|:---:|
+| ![wild](paper/figures/fig3d_wild_tf.png) | ![heu](paper/figures/fig3d_heu_tf.png) | ![ql](paper/figures/fig3d_ql_tf.png) | ![ppo](paper/figures/fig3d_ppo_tf.png) |
 
-  subgraph mdp [ForestFireEnv]
-    Act[Acao: aceiro relativo ao centroide]
-    ObsC[Obs compacta: 625 estados]
-    ObsR[Obs estruturada: 77 dimensoes]
-    Rew[Recompensa: biomassa e custo]
-  end
+## Autômato celular
 
-  subgraph pol [Politicas]
-    R[Aleatorio]
-    H[Heuristica]
-    Q[Q-learning]
-    P[PPO]
-  end
+Estados por célula: `EMPTY=0`, `TREE=1`, `BURNING=2`, `BURNED=3`. A classe `ForestFireCA` implementa um passo vetorizado:
 
-  Act --> Grid
-  Rules --> ObsC
-  Rules --> ObsR
-  Rules --> Rew
-  ObsC --> Q
-  ObsC --> R
-  ObsC --> H
-  ObsR --> P
-  Q --> Act
-  R --> Act
-  H --> Act
-  P --> Act
-```
+1. Células `BURNING` tornam-se `BURNED`.
+2. Cada `TREE` com vizinho `BURNING` (Moore) pode inflamarse. A probabilidade base `p_spread` é modulada pelo alinhamento ao vento `(0, 1)` (leste) via `wind_boost`: a favor do vento a ignição fica mais provável; contra o vento, menos.
+3. Com probabilidade `p_spot`, brasas saltam entre `spot_min` e `spot_max` células na direção do vento e podem acender árvores remotas (spotting).
+4. `p_grow=0.0`: não há regeneração durante o episódio de combate.
 
-## Pipeline de um passo
+Parâmetros canônicos (`src/config.py`):
 
-```mermaid
-sequenceDiagram
-  participant Agent as Politica
-  participant Env as ForestFireEnv
-  participant CA as ForestFireCA
+| Parâmetro | Valor | Papel |
+|-----------|-------|--------|
+| `size` | 30 | Lado da grade |
+| `coarse` | 5 | Partição em 25 regiões (blocos 6×6) |
+| `tree_density` | 0,60 | Densidade inicial de árvores |
+| `n_ignitions` | 3 | Focos iniciais |
+| `p_spread` | 0,90 | Probabilidade base de espalhamento |
+| `wind` / `wind_boost` | (0, 1) / 2,0 | Direção e intensidade do viés |
+| `p_spot` / salto | 0,28 / 3–6 | Spotting |
+| `cells_per_action` | 8 | Orçamento de aceiro por passo |
+| `max_steps` | 70 | Horizonte do episódio |
 
-  Agent->>Env: acao at
-  Env->>Env: apply firebreak
-  Env->>CA: step grid
-  CA->>CA: Burning para Burned
-  CA->>CA: ignicao local com vento
-  CA->>CA: spotting salto 3 a 6
-  CA-->>Env: grid t+1
-  Env-->>Agent: obs, reward, done
-```
+## Problema de controle (MDP)
 
-## Fluxo de treino e avaliação
+`ForestFireEnv` encapsula o CA em uma API Gymnasium. Em cada passo:
 
-```mermaid
-flowchart LR
-  CFG[EnvConfig] --> TQ[QTrainer]
-  CFG --> TP[PPOTrainer]
-  TQ --> QT[q_table.npz]
-  TP --> PP[ppo_forest_fire.zip]
-  QT --> EV[PolicyEvaluator]
-  PP --> EV
-  CFG --> EV
-  EV --> MET[eval_metrics.json]
-  EV --> GIF[render_3d GIFs]
-```
+1. O agente escolhe uma ação em `Discrete(10)`: nove deslocamentos relativos ao centroide do fogo na grade `coarse×coarse`, mais no-op.
+2. Até `cells_per_action` árvores na região alvo são convertidas em `EMPTY` (aceiro).
+3. O CA avança um tick.
+4. A recompensa combina biomassa preservada e custo do aceiro; o episódio termina quando não há mais `BURNING` ou se atinge `max_steps`.
 
-## Modelo do autômato
+Há duas representações de observação, alinhadas às capacidades de cada algoritmo:
 
-Estados por célula: `EMPTY=0`, `TREE=1`, `BURNING=2`, `BURNED=3`.
+- **Compacta** (baselines e Q-learning): tupla `(região_do_fogo, bin_de_fogo, bin_de_árvores)`, totalizando 25 × 5 × 5 = **625** estados discretos. Adequada a tabela Q, mas perde geometria fina da frente de fogo.
+- **Estruturada** (PPO): vetor contínuo de **77** dimensões (mapa coarse de ocupação, estatísticas locais, parâmetros de vento/spotting normalizados). Permite à política MLP explorar correlações espaciais que o índice tabular não captura.
 
-A cada tick (`ForestFireCA.step`):
+## Políticas e treino
 
-1. Células `BURNING` passam a `BURNED`.
-2. Cada `TREE` com vizinho `BURNING` na vizinhança de Moore ignora com probabilidade modulada pelo alinhamento ao vento constante `(0, 1)` (leste) e `wind_boost=2.0`.
-3. Spotting: com probabilidade `p_spot=0.28`, brasas saltam `spot_min..spot_max` em {3,...,6} células na direção do vento e podem acender `TREE` remotas.
-4. `p_grow=0.0` (sem regeneração durante o episódio de combate).
+| Política | Observação | Comportamento |
+|----------|------------|---------------|
+| Aleatório | compacta | Amostragem uniforme em `A` |
+| Heurística | compacta | Sempre ação 0 (região do centroide) enquanto houver fogo |
+| Q-learning | compacta | Tabela Q, ε-greedy, α=0,25, γ=0,95; 3000 episódios |
+| PPO | estruturada 77-D | Stable-Baselines3 `MlpPolicy`; 200k timesteps |
 
-Parâmetros canônicos em `src/config.py` (`EnvConfig`):
+A heurística é um baseline forte e interpretável (aceiro na frente aparente do fogo). O Q-learning opera no mesmo espaço de estados da heurística e do aleatório; o PPO recebe a observação estruturada. Essa assimetria de observação é deliberada e discutida no artigo: o objetivo não é isolar o otimizador em observação idêntica, e sim comparar políticas tipicamente usadas em cada regime (tabular vs. contínuo).
 
-| Parâmetro | Valor |
-|-----------|-------|
-| `size` | 30 |
-| `coarse` | 5 (regiões 6×6) |
-| `tree_density` | 0,60 |
-| `n_ignitions` | 3 |
-| `p_spread` | 0,90 |
-| `wind` | (0, 1) |
-| `wind_boost` | 2,0 |
-| `p_spot` | 0,28 |
-| `spot_min` / `spot_max` | 3 / 6 |
-| `cells_per_action` | 8 |
-| `max_steps` | 70 |
-
-## MDP de controle
-
-- **Ação**: Discrete(10). Nove deslocamentos relativos ao centroide do fogo em grade `coarse×coarse`, mais no-op. Em cada ação efetiva, até `cells_per_action` árvores na região alvo são convertidas em `EMPTY` (aceiro).
-- **Observação compacta** (Q-learning / baselines): `(região_do_fogo, bin_intensidade, bin_biomassa)` → 25 × 5 × 5 = **625** estados.
-- **Observação estruturada** (PPO): vetor de **77** dimensões (mapa coarse de estados, estatísticas locais, vento/spotting normalizados). Ver `RichObservationEncoder` / `compute_rich_obs`.
-- **Recompensa**: fração de biomassa preservada relativa ao custo de abertura de aceiro (detalhe em `ForestFireEnv.step`).
-- **Término**: ausência de `BURNING` ou `max_steps`.
-
-## Políticas
-
-| Política | Observação | Critério |
-|----------|------------|----------|
-| Aleatório | compacta | amostragem uniforme em `A` |
-| Heurística | compacta | ação 0 (centroide) enquanto houver fogo |
-| Q-learning | compacta | tabela Q, ε-greedy, α=0,25, γ=0,95 |
-| PPO | estruturada 77-D | Stable-Baselines3 `MlpPolicy` |
-
-Justiça experimental: `make_default_env()` instancia o mesmo `EnvConfig` para treino, avaliação e renderização. `PolicyEvaluator` percorre seeds `seed, seed+1, ...` idênticas para todas as políticas.
+Artefactos de treino/avaliação em `results/`: `q_table.npz`, `ppo_forest_fire.zip`, `eval_metrics.json`, curvas e GIFs.
 
 ## Organização do código
 
 ```
 src/
-  config.py                 EnvConfig, make_default_env
-  ca/                       ForestFireCA, estados
-  env.py                    ForestFireEnv, encoders
-  agents/                   Policy, QLearningAgent, PPOPolicy, baselines
-  trainers/                 QTrainer, PPOTrainer
-  evaluation/               EpisodeRunner, PolicyEvaluator
-  rendering/                plots 2D, cena 3D
-  train.py                  CLI Q-learning
-  train_ppo.py              CLI PPO
-  evaluate.py               CLI avaliação
-  render_3d.py              CLI GIFs 3D
-paper/                      artigo + figuras Plotly
-results/                    métricas, modelos, animações
-prompts/                    registro de prompts de IA
+  config.py       EnvConfig (fonte única de parâmetros)
+  ca/             ForestFireCA e estados
+  env.py          ForestFireEnv e encoders de observação
+  agents/         Policy, QLearningAgent, PPOPolicy, baselines
+  trainers/       QTrainer, PPOTrainer
+  evaluation/     EpisodeRunner, PolicyEvaluator
+  rendering/      plots 2D e cena 3D
+  train.py        CLI Q-learning
+  train_ppo.py    CLI PPO
+  evaluate.py     CLI avaliação
+  render_3d.py    CLI GIFs 3D
+paper/            artigo LaTeX e figuras
+results/          métricas, modelos e animações
 ```
 
-Diagrama de dependências entre pacotes:
+Fluxo típico: configurar via `EnvConfig` → treinar com `QTrainer` / `PPOTrainer` → avaliar com `PolicyEvaluator` (seeds compartilhadas) → renderizar com `render_3d`.
 
-```mermaid
-flowchart BT
-  config --> env
-  ca --> env
-  env --> agents
-  agents --> trainers
-  agents --> evaluation
-  config --> trainers
-  config --> evaluation
-  rendering --> evaluation
-  trainers --> trainCli[train e train_ppo]
-  evaluation --> evalCli[evaluate]
-  rendering --> renderCli[render_3d]
-```
-
-Classes principais: `EnvConfig`, `ForestFireCA`, `ForestFireEnv`, `CompactObservationEncoder`, `RichObservationEncoder`, `QLearningAgent`, `PPOPolicy`, `HeuristicPolicy`, `QTrainer`, `PPOTrainer`, `EpisodeRunner`, `PolicyEvaluator`.
-
-## Instalação
+## Instalação e reprodução
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-```
 
-Dependências principais: `numpy`, `gymnasium`, `stable-baselines3`, `matplotlib`, `imageio`, `plotly`, `kaleido`.
-
-## Reprodução
-
-```bash
-# Treino
 python -m src.train --episodes 3000 --out results
 python -m src.train_ppo --timesteps 200000 --out results
-
-# Avaliação (seeds 1000 a 1099 por omissão)
 python -m src.evaluate --episodes 100 --seed 1000 --out results
 
-# Render 3D (seed ilustrativa 340)
 python -m src.render_3d --compare4 --seed 340 --out results/forest_fire_3d_4algos.gif
-python -m src.render_3d --policy PPO --seed 340 --out results/forest_fire_3d_ppo.gif
-
-# Figuras do artigo
 python paper/make_figures.py
 cd paper && tectonic article.tex
 ```
 
-Artefactos esperados em `results/`: `q_table.npz`, `ppo_forest_fire.zip`, `eval_metrics.json`, curvas de aprendizado, GIFs 3D.
+Dependências principais: `numpy`, `gymnasium`, `stable-baselines3`, `matplotlib`, `imageio`, `plotly`, `kaleido`.
 
-## Artigo
-
-Compilar com [Tectonic](https://tectonic-typesetting.github.io/):
-
-```bash
-cd paper && tectonic article.tex
-```
-
-Figuras geradas por `paper/make_figures.py` a partir de `results/eval_metrics.json` e dos retornos de treino.
-
-## Licença e uso
+## Licença
 
 Material académico da disciplina. Uso e redistribuição conforme as regras do curso.
