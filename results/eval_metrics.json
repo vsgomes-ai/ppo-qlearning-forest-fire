@@ -1,0 +1,26 @@
+{
+  "aleatório": {
+    "return": -7.462148885422665,
+    "return_std": 19.480828820720312,
+    "trees_saved_frac": 0.5272377185619816,
+    "trees_saved_std": 0.20229394583699892
+  },
+  "heurística": {
+    "return": -5.937688582557924,
+    "return_std": 20.967602315305065,
+    "trees_saved_frac": 0.5591563276286724,
+    "trees_saved_std": 0.22849989520982453
+  },
+  "Q-learning": {
+    "return": -4.383893717369392,
+    "return_std": 18.344749573629304,
+    "trees_saved_frac": 0.5465613121786372,
+    "trees_saved_std": 0.21347796447461848
+  },
+  "PPO": {
+    "return": 4.788083429723038,
+    "return_std": 17.298258128766673,
+    "trees_saved_frac": 0.6100303186797386,
+    "trees_saved_std": 0.22928242561267104
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "episodes": 3000,
+  "final_epsilon": 0.02,
+  "mean_return_last_200": 2.676463093754423,
+  "mean_trees_saved_last_200": 0.5424642999445393
+}

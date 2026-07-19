@@ -1,0 +1,6 @@
+{
+  "algorithm": "PPO",
+  "timesteps": 200000,
+  "n_episodes_logged": 15371,
+  "mean_return_last_50": 12.121322719999998
+}
