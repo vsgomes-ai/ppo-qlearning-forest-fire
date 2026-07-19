@@ -357,8 +357,9 @@ A heurística e o \emph{Q-learning} compacto operam essencialmente sobre o
 centroide; o PPO, ao receber densidades regionais, consegue formar uma
 política condicionada à geometria a sotavento.
 
-Esse padrão ilustra um princípio clássico de RL: a representação do estado
-limita o desempenho tanto quanto o algoritmo de atualização~\cite{sutton2018}.
+Esse padrão ilustra um princípio clássico de RL: o desempenho depende tanto
+da representação do estado quanto do algoritmo de
+aprendizado~\cite{sutton2018}.
 Convém, contudo, precisar o que a comparação isola e o que ela mistura.
 O \emph{Q-learning} opera em tabela sobre $625$ estados discretos; o PPO
 aproxima política e valor com uma rede neural MLP sobre um vetor contínuo de
@@ -368,7 +369,8 @@ estruturada'': também é ``tabela versus aproximação de função''.
 Dar as mesmas $77$ dimensões ao \emph{Q-learning} tabular exigiria
 discretização agressiva; um caminho mais limpo para separar observação de
 capacidade de modelo seria treinar, no mesmo vetor de $77$ dimensões, um
-agente tabular aproximado (por exemplo DQN) e comparar PPO versus DQN.
+algoritmo Deep Q-Network (DQN), que utiliza aproximação de função, e comparar
+PPO versus DQN.
 Não realizamos esse experimento aqui; reconhecemos a confusão parcial nas
 limitações e interpretamos o ganho do PPO como evidência conjunta de
 representação espacial mais informativa \emph{e} de um otimizador capaz de
@@ -397,7 +399,7 @@ pareado, porém numericamente modesta em pontos percentuais; o ganho em
 retorno é mais pronunciado.
 Além disso, como discutido acima, a comparação \emph{Q-learning} versus PPO
 confunde parcialmente tipo de observação e capacidade de aproximação de
-função; um DQN (ou outro método \emph{deep} tabular-aproximado) na observação
+função; um método baseado em aproximação de função, como o DQN, na observação
 de $77$ dimensões isolaria melhor esses fatores.
 Essas ressalvas não anulam o resultado central: sob física com brasas, uma
 política com observação espacial estruturada e aproximação neural eleva o
@@ -410,9 +412,9 @@ O PPO com observação espacial estruturada superou a heurística de centroide, 
 \emph{Q-learning} tabular e a política aleatória tanto em biomassa preservada
 quanto em retorno.
 Além do ranking empírico, a contribuição conceitual é mais ampla: os resultados
-sugerem que, em problemas de controle espacial com propagação não local,
-investir em representações de estado mais informativas pode ser tão ou mais
-importante do que substituir o algoritmo de aprendizado.
+sugerem que, no cenário estudado, em problemas de controle espacial com
+propagação não local, investir em representações de estado mais informativas
+pode ser tão ou mais importante do que substituir o algoritmo de aprendizado.
 No presente estudo, essa ideia aparece na comparação entre uma observação
 compacta centrada no centroide e uma observação espacial estruturada capaz de
 antecipar risco a sotavento, sem alterar o ambiente físico compartilhado pelas
@@ -423,7 +425,7 @@ rebrota após aparente extinção) aumentaria a demanda por antecipação e
 memória.
 Outras extensões diretas são: (i)~variação sistemática de
 $\mathrm{wind\_boost}$ e de $p_{\mathrm{spot}}$; (ii)~avaliação com mais
-episódios de teste para estreitar intervalos; (iii)~um agente DQN na mesma
+episódios de teste para estreitar intervalos; (iii)~um algoritmo DQN na mesma
 observação de $77$ dimensões, para separar melhor representação de
 capacidade de modelo.
 
