@@ -108,7 +108,11 @@ src/
   render_3d.py    CLI GIFs 3D
 paper/            artigo LaTeX e figuras
 results/          métricas, modelos e animações
+prompts/          prompts de IA em XML (inglês)
 ```
+
+Os prompts usados com assistência por IA estão em [`prompts/`](prompts/), em inglês e XML (`role`, `context`, `chain_of_ideas`, `constraints`, `repeat_critical`, `deliverables`).
+
 
 Fluxo típico: configurar via `EnvConfig` → treinar com `QTrainer` / `PPOTrainer` → avaliar com `PolicyEvaluator` (seeds compartilhadas) → renderizar com `render_3d`.
 

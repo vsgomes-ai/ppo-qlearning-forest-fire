@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt id="03_fair_rl_comparison" project="forest-fire-ca-rl" lang="en">
+  <meta>
+    <tool>Cursor</tool>
+    <phase>agents, training, and scientifically fair evaluation</phase>
+  </meta>
+
+  <role>
+    You are an RL experimentalist. You refuse unfair benchmarks. You compare
+    algorithms only when environment dynamics and evaluation seeds match.
+  </role>
+
+  <context>
+    <policies>
+      <policy name="random" observation="compact" />
+      <policy name="heuristic" observation="compact" notes="always clear centroid region while fire exists" />
+      <policy name="q_learning" observation="compact" notes="625 discrete states, tabular Q" />
+      <policy name="ppo" observation="structured_77d" notes="Stable-Baselines3 MlpPolicy" />
+    </policies>
+    <training>
+      <q_learning episodes="3000" />
+      <ppo timesteps="200000" />
+    </training>
+    <evaluation episodes="100" seed_start="1000" />
+  </context>
+
+  <goal>
+    Train Q-learning and PPO, then evaluate all four policies on identical seeds.
+    Report honest metrics (mean ± std of trees saved and return).
+  </goal>
+
+  <chain_of_ideas>
+    <step order="1">
+      Implement baselines: RandomPolicy and HeuristicPolicy on compact observation.
+    </step>
+    <step order="2">
+      Implement QLearningAgent (ε-greedy, α=0.25, γ=0.95) and QTrainer.
+    </step>
+    <step order="3">
+      Implement structured observation (77-D) and PPOTrainer via Stable-Baselines3.
+    </step>
+    <step order="4">
+      State explicitly that observation richness differs (tabular vs continuous)
+      and that this asymmetry is intentional and must be disclosed in the paper.
+    </step>
+    <step order="5">
+      Evaluate with PolicyEvaluator: for i in 0..99 use seed = 1000+i for EVERY policy.
+    </step>
+    <step order="6">
+      Save q_table.npz, ppo_forest_fire.zip, eval_metrics.json, learning curves.
+    </step>
+    <step order="7">
+      Interpret results without hype: if PPO wins, explain via spotting anticipation;
+      if gaps are small, say so.
+    </step>
+  </chain_of_ideas>
+
+  <constraints>
+    <item>Never change CA physics to favor one algorithm.</item>
+    <item>Never use different seeds per policy in the main comparison.</item>
+    <item>Never cherry-pick only favorable episodes for the headline table.</item>
+    <item>Disclose observation asymmetry (compact vs structured).</item>
+    <item>Do not fabricate evaluation numbers.</item>
+  </constraints>
+
+  <repeat_critical>
+    <item>SAME EnvConfig for random, heuristic, Q-learning, and PPO.</item>
+    <item>SAME EnvConfig for random, heuristic, Q-learning, and PPO.</item>
+    <item>SAME evaluation seeds for all policies (seed, seed+1, ...).</item>
+    <item>SAME evaluation seeds for all policies (seed, seed+1, ...).</item>
+    <item>Do NOT invent metrics. Only report numbers from eval_metrics.json / runs.</item>
+    <item>Do NOT invent metrics. Only report numbers from eval_metrics.json / runs.</item>
+    <item>Observation asymmetry MUST be disclosed (compact vs 77-D).</item>
+  </repeat_critical>
+
+  <deliverables>
+    <item>src/agents/, src/trainers/, src/evaluation/</item>
+    <item>CLI: python -m src.train / train_ppo / evaluate</item>
+    <item>results/eval_metrics.json and model artifacts</item>
+  </deliverables>
+
+  <acceptance_criteria>
+    <item>All four policies appear in eval_metrics.json.</item>
+    <item>Evaluation loop uses shared seeds.</item>
+    <item>Reported means match recomputation from saved arrays when present.</item>
+  </acceptance_criteria>
+
+  <output_format>
+    Code + short Portuguese summary with the real metric table.
+    No em dash characters in user-facing Portuguese if the user forbids them.
+  </output_format>
+</prompt>

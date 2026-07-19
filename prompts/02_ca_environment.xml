@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt id="02_ca_environment" project="forest-fire-ca-rl" lang="en">
+  <meta>
+    <tool>Cursor</tool>
+    <phase>implement cellular automaton and Gymnasium MDP</phase>
+  </meta>
+
+  <role>
+    You are a scientific Python engineer specializing in cellular automata and
+    Gymnasium environments. You write clear, class-based, reproducible code.
+  </role>
+
+  <context>
+    <theme>Forest-fire cellular automaton with wind and ember spotting</theme>
+    <grid>30x30</grid>
+    <states>EMPTY, TREE, BURNING, BURNED</states>
+    <control>
+      Agent opens firebreaks by clearing TREE cells in a region relative to the
+      fire centroid (budget: 8 cells per step; 9 relative deltas + no-op).
+    </control>
+    <canonical_config>
+      tree_density=0.60, n_ignitions=3, p_spread=0.90, wind=(0,1), wind_boost=2.0,
+      p_spot=0.28, spot_min=3, spot_max=6, coarse=5, max_steps=70
+    </canonical_config>
+  </context>
+
+  <goal>
+    Implement ForestFireCA and ForestFireEnv so that every later policy
+    (random, heuristic, Q-learning, PPO) shares one environment factory.
+  </goal>
+
+  <chain_of_ideas>
+    <step order="1">
+      Define cell states and vectorized CA step: Burning→Burned, Moore ignition,
+      wind-biased probabilities, then spotting jumps.
+    </step>
+    <step order="2">
+      Verify wind direction physically: east wind must favor eastward spread
+      (fix inverted wind if present).
+    </step>
+    <step order="3">
+      Wrap the CA in Gymnasium: action applies firebreak, then CA steps once;
+      reward trades saved biomass vs clearing cost.
+    </step>
+    <step order="4">
+      Centralize parameters in EnvConfig / make_default_env() as the single
+      source of truth.
+    </step>
+    <step order="5">
+      Add a compact observation encoder for tabular agents
+      (fire region, fire bin, tree bin → 625 states).
+    </step>
+    <step order="6">
+      Smoke-test reset/step determinism under a fixed seed.
+    </step>
+  </chain_of_ideas>
+
+  <constraints>
+    <item>One shared EnvConfig for training, evaluation, and rendering.</item>
+    <item>Do not hardcode divergent physics for different agents.</item>
+    <item>Do not write exploit code or attack systems.</item>
+    <item>Prefer classes over sprawling scripts.</item>
+    <item>Keep Portuguese replies to the user when the user writes in Portuguese.</item>
+  </constraints>
+
+  <repeat_critical>
+    <item>SAME environment parameters for ALL policies.</item>
+    <item>SAME environment parameters for ALL policies.</item>
+    <item>Wind physics must be directionally correct (east wind → eastward bias).</item>
+    <item>Wind physics must be directionally correct (east wind → eastward bias).</item>
+    <item>make_default_env() is the only factory for the canonical experiment.</item>
+    <item>make_default_env() is the only factory for the canonical experiment.</item>
+  </repeat_critical>
+
+  <deliverables>
+    <item>src/ca/ForestFireCA</item>
+    <item>src/env.py ForestFireEnv + observation encoders</item>
+    <item>src/config.py EnvConfig</item>
+    <item>Short smoke test under seed=340</item>
+  </deliverables>
+
+  <acceptance_criteria>
+    <item>env.reset(seed=s) is reproducible.</item>
+    <item>Spotting can ignite trees beyond the local Moore neighborhood.</item>
+    <item>Action budget clears at most cells_per_action trees per step.</item>
+  </acceptance_criteria>
+
+  <output_format>
+    Implement code in the repository. Summarize changes briefly in Portuguese.
+    Do not invent fake metrics.
+  </output_format>
+</prompt>
