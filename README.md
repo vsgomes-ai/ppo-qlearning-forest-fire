@@ -20,11 +20,7 @@ A justiça experimental é central: `EnvConfig` / `make_default_env()` fixam os 
 
 ## Visualização (seed 340)
 
-<<<<<<< HEAD
-Comparação 3D das quatro políticas:
-=======
 Comparação 3D das quatro políticas sobre a mesma realização estocástica (figuras análogas às do artigo):
->>>>>>> bc303cd (docs: streamline README with fewer diagrams and clearer prose)
 
 ![Comparação 3D: Aleatório, Heurística, Q-learning e PPO](results/forest_fire_3d_4algos.gif)
 
