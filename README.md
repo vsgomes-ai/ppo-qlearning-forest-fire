@@ -6,7 +6,7 @@ Artigo: [`paper/article.pdf`](paper/article.pdf) · código fonte LaTeX: [`paper
 
 ## Visualização (seed 340)
 
-Comparação 3D das quatro políticas (mesma realização estocástica usada nas figuras do artigo):
+Comparação 3D das quatro políticas:
 
 ![Comparação 3D: Aleatório, Heurística, Q-learning e PPO](results/forest_fire_3d_4algos.gif)
 
