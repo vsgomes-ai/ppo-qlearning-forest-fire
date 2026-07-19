@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+*.npz
+results/*.npz
+!results/.gitkeep
+paper/figures/boxplot_data.npz
+.tectonic*
+
+# Local delivery notes (not for the public repo)
+ENTREGA.md
+prompts/session-01.md
+results/debug_*.png
