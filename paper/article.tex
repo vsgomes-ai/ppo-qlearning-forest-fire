@@ -83,7 +83,10 @@ observação compacta, e Proximal Policy Optimization (PPO) com observação
 espacial estruturada. Em 100 episódios de teste, o PPO preserva em média
 \SI{61,0}{\percent} das árvores (retorno $+4{,}79$), à frente da heurística
 (\SI{55,9}{\percent}), do \emph{Q-learning} (\SI{54,7}{\percent}) e da
-política aleatória (\SI{52,7}{\percent}). O resultado indica que, quando o fogo
+política aleatória (\SI{52,7}{\percent}).
+Testes~$t$~de Student pareados nas mesmas sementes confirmam diferenças
+significativas do PPO em biomassa frente às três alternativas ($p<0{,}05$).
+O resultado indica que, quando o fogo
 pode ultrapassar barreiras por meio de brasas a sotavento, a qualidade da observação é tão
 determinante quanto a escolha do algoritmo de aprendizado.}
 
@@ -104,7 +107,10 @@ tabular \emph{Q-learning} with a compact observation, and Proximal Policy
 Optimization (PPO) with a structured spatial observation. Over 100 test episodes, PPO
 preserves on average \SI{61.0}{\percent} of the trees (return $+4.79$), ahead
 of the heuristic (\SI{55.9}{\percent}), \emph{Q-learning}
-(\SI{54.7}{\percent}), and the random policy (\SI{52.7}{\percent}). The result
+(\SI{54.7}{\percent}), and the random policy (\SI{52.7}{\percent}).
+Paired $t$-tests on shared seeds confirm significant PPO gains in biomass
+against all three alternatives ($p<0.05$).
+The result
 indicates that, when fire can overcome barriers via downwind spotting, observation
 quality is as decisive as the choice of learning algorithm.}
 
@@ -193,6 +199,56 @@ Nessas condições, a regra fixa ``sempre no centroide'' já é uma boa
 aproximação do que o tabular consegue representar, e o custo da exploração
 durante o treino não se traduz em ganho claro na avaliação gulosa.
 
+Como as sementes de teste são compartilhadas, as diferenças por episódio formam
+pares naturais.
+Aplicamos testes~$t$~de Student bilaterais pareados à fração de árvores
+preservadas, comparando o PPO a cada alternativa (Tabela~\ref{tab:paired}).
+Todos os três contrastes são significativos a $p<0{,}05$:
+versus aleatório, $\Delta=+0{,}083$, $t(99)=3{,}71$, $p=3{,}4\times 10^{-4}$;
+versus heurística, $\Delta=+0{,}051$, $t(99)=2{,}59$, $p=0{,}011$;
+versus \emph{Q-learning}, $\Delta=+0{,}063$, $t(99)=2{,}88$, $p=0{,}0049$.
+Os intervalos de confiança de \SI{95}{\percent} para a diferença média
+excluem zero em todos os casos.
+Os tamanhos de efeito pareados (Cohen~$d_z$) são modestos
+($0{,}26$ a $0{,}37$ em biomassa), coerentes com a alta variância entre mapas,
+mas o sinal é sistemático sob o protocolo de sementes idênticas.
+No retorno acumulado, as diferenças pareadas do PPO são ainda mais nítidas
+($p<10^{-4}$ frente a cada baseline).
+A Figura~\ref{fig:paired} mostra a distribuição das diferenças
+$\Delta=$~PPO $-$ baseline por semente: a massa de pontos situa-se acima de
+zero em todos os contrastes, com espalhamento visível, o que ilustra o efeito
+sistemático porém modesto reportado na Tabela~\ref{tab:paired}.
+
+\begin{table}[H]
+\centering
+\caption{Testes~$t$~de Student pareados (bilaterais) na fração de árvores
+preservadas: PPO versus cada política, $n=100$ episódios com sementes
+$1000$--$1099$.
+$\Delta$ é a diferença média (PPO $-$ baseline); $d_z$ é o tamanho de efeito
+pareado de Cohen.}
+\label{tab:paired}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Contraste & $\Delta$ & $t(99)$ & $p$ & $d_z$ \\
+\midrule
+PPO vs.\ aleatório   & $+0{,}083$ & $3{,}71$ & $3{,}4\times 10^{-4}$ & $0{,}37$ \\
+PPO vs.\ heurística  & $+0{,}051$ & $2{,}59$ & $0{,}011$ & $0{,}26$ \\
+PPO vs.\ Q-learning  & $+0{,}063$ & $2{,}88$ & $0{,}0049$ & $0{,}29$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.88\textwidth]{figures/fig_paired_diff.pdf}
+\caption{Diferenças pareadas de biomassa preservada por semente
+($\Delta=$~PPO $-$ baseline) nos três contrastes.
+Cada ponto é um dos $100$ episódios de teste com semente compartilhada.
+A linha horizontal em zero marca equivalência; valores positivos favorecem o PPO.
+Caixas mostram mediana e quartis.}
+\label{fig:paired}
+\end{figure}
+
 \subsection{Distribuição entre episódios}
 
 A Figura~\ref{fig:violin} mostra a distribuição completa da biomassa
@@ -201,7 +257,9 @@ Há sobreposição entre políticas, o que é esperado: a configuração inicial
 três focos domina parte da variância (desvios padrão próximos de $0{,}22$).
 Ainda assim, a massa de probabilidade do PPO desloca-se para valores mais
 altos, e a mediana acompanha o deslocamento da média.
-Isso indica ganho sistemático, e não apenas um ou dois episódios outliers.
+Os testes pareados da Tabela~\ref{tab:paired} quantificam esse deslocamento
+como diferença média estatisticamente detectável, e não apenas como um ou dois
+episódios outliers.
 
 \begin{figure}[!ht]
 \centering
@@ -244,9 +302,13 @@ Sem controle e sob a heurística, a maior parte da biomassa é consumida
 (cerca de \SI{10}{\percent} e \SI{12}{\percent} preservados, respectivamente).
 O \emph{Q-learning} melhora parcialmente.
 O PPO preserva aproximadamente \SI{91}{\percent} das árvores nesse episódio.
-O contraste é mais extremo do que a média da Tabela~\ref{tab:results}, o que
-é desejável para ilustração: mostra um regime em que antecipar o sotavento
-muda o desfecho qualitativo do incêndio.
+Enfatizamos que esse episódio é um caso ilustrativo de melhor cenário
+(\emph{best case}), escolhido porque o contraste espacial é visualmente claro;
+ele \emph{não} é representativo da média da Tabela~\ref{tab:results}
+(\SI{61}{\percent} versus cerca de \SI{55}{\percent}--\SI{56}{\percent}).
+A figura serve para mostrar um regime em que antecipar o sotavento muda o
+desfecho qualitativo do incêndio, enquanto a inferência quantitativa
+permanece ancorada nas $100$ sementes compartilhadas e nos testes pareados.
 A visualização 3D (volumes de copa, chamas e tocos sobre fundo escuro)
 documenta o estado da grade após a interação entre o AC e cada política.
 
@@ -275,8 +337,9 @@ documenta o estado da grade após a interação entre o AC e cada política.
   \includegraphics[width=\linewidth]{figures/fig3d_ppo_tf.png}
   \caption{PPO}
 \end{subfigure}
-\caption{Renderização 3D do desenvolvimento de um episódio ilustrativo
-(semente $340$).
+\caption{Renderização 3D de um episódio ilustrativo de melhor cenário
+(semente $340$), \emph{não} representativo da média da
+Tabela~\ref{tab:results}.
 Painel (a): configuração inicial compartilhada.
 Painéis (b) a (e): estado final sob cada forma de controle.
 A mesma física de vento e brasas atua em todos os casos.}
@@ -296,23 +359,50 @@ política condicionada à geometria a sotavento.
 
 Esse padrão ilustra um princípio clássico de RL: a representação do estado
 limita o desempenho tanto quanto o algoritmo de atualização~\cite{sutton2018}.
-Um \emph{Q-learning} com a mesma observação de $77$ dimensões exigiria
-discretização agressiva ou aproximação de função, o que o aproximaria, na
-prática, de métodos \emph{deep} como o PPO.
+Convém, contudo, precisar o que a comparação isola e o que ela mistura.
+O \emph{Q-learning} opera em tabela sobre $625$ estados discretos; o PPO
+aproxima política e valor com uma rede neural MLP sobre um vetor contínuo de
+$77$ dimensões.
+Assim, o contraste não é apenas ``observação compacta versus observação
+estruturada'': também é ``tabela versus aproximação de função''.
+Dar as mesmas $77$ dimensões ao \emph{Q-learning} tabular exigiria
+discretização agressiva; um caminho mais limpo para separar observação de
+capacidade de modelo seria treinar, no mesmo vetor de $77$ dimensões, um
+agente tabular aproximado (por exemplo DQN) e comparar PPO versus DQN.
+Não realizamos esse experimento aqui; reconhecemos a confusão parcial nas
+limitações e interpretamos o ganho do PPO como evidência conjunta de
+representação espacial mais informativa \emph{e} de um otimizador capaz de
+explorá-la.
 A comparação justa que adotamos (mesmo ambiente, mesmas sementes, mesmo
-espaço de ações) isola precisamente esse eixo observação versus algoritmo.
+espaço de ações) ainda isola o eixo informação/capacidade de decisão frente
+à física compartilhada do AC.
 
 \subsection{Limitações}
 \label{sec:limitacoes}
 
-A grade é moderada ($30\times 30$); o vento é constante; não há regeneração de
-vegetação nem fogo subterrâneo.
+A grade é moderada ($30\times 30$); o vento é constante, com reforço fixo
+$\mathrm{wind\_boost}=2{,}0$; não há regeneração de vegetação nem fogo
+subterrâneo.
+Não exploramos sensibilidade a intensidades de vento distintas, o que seria
+um teste natural de robustez.
 A variância entre episódios permanece alta porque a geometria dos três focos
-iniciais muda o grau de dificuldade.
-A vantagem média do PPO em biomassa é modesta em pontos percentuais, embora
-consistente e acompanhada de ganho claro em retorno.
-Essas ressalvas não anulam o resultado central: sob física com brasas, a
-observação espacial estruturada altera o teto de desempenho.
+iniciais muda o grau de dificuldade (desvios padrão de biomassa próximos de
+$0{,}22$).
+Com $n=100$ e diferenças médias de $0{,}05$ a $0{,}08$, o poder estatístico é
+limitado: os testes pareados detectam o sinal do PPO, mas os tamanhos de
+efeito em biomassa são modestos, e intervalos mais estreitos exigiriam mais
+episódios de teste.
+A vantagem média do PPO em biomassa é, portanto, real sob o protocolo
+pareado, porém numericamente modesta em pontos percentuais; o ganho em
+retorno é mais pronunciado.
+Além disso, como discutido acima, a comparação \emph{Q-learning} versus PPO
+confunde parcialmente tipo de observação e capacidade de aproximação de
+função; um DQN (ou outro método \emph{deep} tabular-aproximado) na observação
+de $77$ dimensões isolaria melhor esses fatores.
+Essas ressalvas não anulam o resultado central: sob física com brasas, uma
+política com observação espacial estruturada e aproximação neural eleva o
+teto de desempenho frente a baselines locais e a um tabular compacto, no
+mesmo ambiente.
 
 Em síntese, implementamos um autômato celular de incêndio com vento e brasas e
 comparamos, sob protocolo experimental único, quatro formas de abrir aceiros.
@@ -330,8 +420,12 @@ políticas.
 
 Como extensão natural, a inclusão de fogo subterrâneo (turfa ou húmus que
 rebrota após aparente extinção) aumentaria a demanda por antecipação e
-memória, ampliando ainda mais o espaço em que políticas com representação espacial
-estruturada devem se destacar.
+memória.
+Outras extensões diretas são: (i)~variação sistemática de
+$\mathrm{wind\_boost}$ e de $p_{\mathrm{spot}}$; (ii)~avaliação com mais
+episódios de teste para estreitar intervalos; (iii)~um agente DQN na mesma
+observação de $77$ dimensões, para separar melhor representação de
+capacidade de modelo.
 
 \FloatBarrier
 \section{Métodos}
@@ -481,12 +575,18 @@ As métricas principais são:
   \item o retorno acumulado (soma das recompensas ao longo do episódio).
 \end{itemize}
 Reportamos média e desvio padrão.
+Como o protocolo é pareado por semente, também aplicamos testes~$t$~de Student
+bilaterais pareados à biomassa e ao retorno, tomando o PPO como referência
+frente a cada baseline, e reportamos $p$-valores, intervalos de confiança
+de \SI{95}{\percent} para a diferença média e tamanhos de efeito $d_z$.
+A distribuição das diferenças por semente é exibida na Figura~\ref{fig:paired}.
 Para visualizar a variabilidade entre focos iniciais, também examinamos a
 distribuição empírica da biomassa preservada.
 As curvas de aprendizado usam o retorno por episódio durante o treino do
 \emph{Q-learning} e do PPO.
-Um episódio ilustrativo com semente $340$ é renderizado em perspectiva 3D
-para contrastar o estado final sob diferentes controles.
+Um episódio ilustrativo de melhor cenário (semente $340$) é renderizado em
+perspectiva 3D apenas para contrastar espacialmente o estado final; a
+inferência quantitativa permanece baseada nas $100$ sementes compartilhadas.
 
 
 \section*{Disponibilidade de dados}

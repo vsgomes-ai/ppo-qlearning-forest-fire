@@ -243,6 +243,80 @@ def fig_learning():
     _write(fig, "fig_learning_curves", width=960, height=340)
 
 
+def fig_paired_diff():
+    """Paired Δ = PPO - baseline for trees_saved, one cloud per contrast."""
+    data = np.load(RESULTS / "eval_per_episode.npz")
+    ppo = data["saved__PPO"]
+    contrasts = [
+        ("vs. aleatório", "saved__aleatório", COLOURS["Aleatório"]),
+        ("vs. heurística", "saved__heurística", COLOURS["Heurística"]),
+        ("vs. Q-learning", "saved__Q-learning", COLOURS["Q-learning"]),
+    ]
+
+    fig = go.Figure()
+    rng = np.random.default_rng(0)
+    for i, (label, key, colour) in enumerate(contrasts):
+        delta = ppo - data[key]
+        # strip / jitter points
+        x = np.full(delta.shape, i) + rng.uniform(-0.12, 0.12, size=delta.shape)
+        fig.add_trace(
+            go.Box(
+                y=delta,
+                x=[label] * len(delta),
+                name=label,
+                marker_color=colour,
+                boxpoints=False,
+                line=dict(color=colour, width=1.6),
+                fillcolor="rgba(0,0,0,0)",
+                showlegend=False,
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=delta,
+                mode="markers",
+                marker=dict(size=6, color=colour, opacity=0.55, line=dict(width=0)),
+                name=label,
+                showlegend=False,
+                hovertemplate=f"{label}<br>Δ=%{{y:.3f}}<extra></extra>",
+            )
+        )
+        # mean marker
+        fig.add_trace(
+            go.Scatter(
+                x=[i],
+                y=[float(np.mean(delta))],
+                mode="markers",
+                marker=dict(symbol="diamond", size=11, color="#1a1a1a"),
+                showlegend=False,
+                hovertemplate=f"média Δ={float(np.mean(delta)):.3f}<extra></extra>",
+            )
+        )
+
+    fig.add_hline(y=0, line=dict(color="#444444", width=1.4, dash="dash"))
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=list(range(len(contrasts))),
+        ticktext=[c[0] for c in contrasts],
+        gridcolor="#eaeaea",
+        zeroline=False,
+    )
+    fig.update_yaxes(
+        title_text="Δ biomassa (PPO − baseline)",
+        gridcolor="#eaeaea",
+        zeroline=False,
+    )
+    fig.update_layout(
+        title=dict(
+            text="Diferenças pareadas por semente (n = 100)",
+            x=0.02,
+            xanchor="left",
+        ),
+    )
+    _write(fig, "fig_paired_diff", width=820, height=400)
+
+
 def fig_3d_stills():
     from src.evaluate import run_episode
     from src.render_3d import build_policy, make_env
@@ -285,9 +359,15 @@ def fig_3d_stills():
 if __name__ == "__main__":
     # garantir dados do violino
     if not (FIG / "boxplot_data.npz").exists():
-        raise SystemExit("Falta boxplot_data.npz; rode a avaliação de distribuição antes.")
+        print("Aviso: falta boxplot_data.npz; pulando fig_violin.")
+        run_violin = False
+    else:
+        run_violin = True
     fig_policy_bars()
-    fig_violin()
+    if run_violin:
+        fig_violin()
     fig_learning()
-    fig_3d_stills()
+    fig_paired_diff()
+    # stills 3D são caros; rode explicitamente se precisar regenerar
+    # fig_3d_stills()
     print("Figuras em", FIG)

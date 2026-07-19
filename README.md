@@ -35,6 +35,9 @@ Nesta seed ilustrativa, o PPO preserva cerca de 91% das árvores, contra ~36% do
 | Heurística | 0,559 ± 0,228               | −5,94           |
 | PPO        | 0,610 ± 0,229               | +4,79           |
 
+Testes t pareados (mesmas seeds): PPO supera aleatório (p = 3,4e-4),
+heurística (p = 0,011) e Q-learning (p = 0,0049) em biomassa.
+
 Stills finais do artigo (sem controle, heurística, Q-learning, PPO), a partir do mesmo estado inicial:
 
 | Sem controle | Heurística | Q-learning | PPO |
